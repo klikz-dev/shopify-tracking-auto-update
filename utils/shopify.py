@@ -37,8 +37,8 @@ def get_order_data(shipwire_order_id: str, shipwire_order_piece_id: str):
         shipwire_order_id, shipwire_order_piece_id)
 
     if not shipwire_order or not shipwire_order_pieces:
-        raise ValueError(f"Invalid data. shipwire_order: {
-            shipwire_order}, shipwire_order_pieces: {shipwire_order_pieces}")
+        raise ValueError(
+            f"Invalid data. shipwire_order: {shipwire_order}, shipwire_order_pieces: {shipwire_order_pieces}")
 
     order_number = shipwire_order['orderNo'].split(".")[0]
     shopify_order = shopify.Order.find_first(name=order_number, status="any")
