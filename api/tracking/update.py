@@ -25,10 +25,10 @@ class handler(BaseHTTPRequestHandler):
 
             print(json.dumps(tracking_data, indent=4))
 
-            # shopify.update_order_tracking(
-            #     tracking_data=tracking_data,
-            #     test="timothymccarthy@bedjet.com"
-            # )
+            shopify.update_order_tracking(
+                tracking_data=tracking_data,
+                test="timothymccarthy@bedjet.com"
+            )
 
             self._send_response(200, "OK")
 
