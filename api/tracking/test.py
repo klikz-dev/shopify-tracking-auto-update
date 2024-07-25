@@ -13,7 +13,7 @@ class handler(BaseHTTPRequestHandler):
             content_length = self.headers.get('content-length')
             if not content_length:
                 self._send_response(411, "Length Required")
-                print("Webhook content error".encode())
+                print("Webhook content error")
                 return
 
             # Read Data
@@ -32,8 +32,8 @@ class handler(BaseHTTPRequestHandler):
             return
 
         except Exception as e:
-            print(f"Webhook error: {str(e)}".encode())
-            self._send_response(400, f"Bad Request: {str(e)}")
+            print(e)
+            self._send_response(400, f"{str(e)}")
 
     def do_GET(self):
         self._send_response(200, 'Shipwire tracking integration endpoint')
