@@ -25,7 +25,7 @@ def get_order(shipwire_order_id):
 
 def get_order_pieces(shipwire_order_id, shipwire_order_piece_id):
     response = requests.get(
-        f"{SHIPWIRE_API_BASE_URL}/orders/{shipwire_order_id}/pieces/{shipwire_order_piece_id}",
+        f"{SHIPWIRE_API_BASE_URL}/orders/{shipwire_order_id}/pieces",
         headers={
             'Authorization': f"ShipwireKey {SHIPWIRE_API_KEY}"
         }
@@ -33,9 +33,10 @@ def get_order_pieces(shipwire_order_id, shipwire_order_piece_id):
 
     data = json.loads(response.text)
     try:
-        resource = data.get('resource').get('items')[
-            0]['resource']['contents']['resource']['items']
-    except:
-        resource = None
+        for item in data['resource']['items']:
+            if item['resource']['id'] == shipwire_order_piece_id:
+                return item['resource']['contents']['resource']['items']
 
-    return resource
+        return None
+    except:
+        return None

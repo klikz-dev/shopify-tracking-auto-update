@@ -73,22 +73,29 @@ def update_order_tracking(tracking_data: dict, test=None) -> bool:
 
         fulfillment_orders = get_fulfillment_orders(order.id)
 
-        line_items_by_fulfillment_order = [
-            {
-                "fulfillment_order_id": fo['id'],
-                "fulfillment_order_line_items": [
-                    {
-                        'id': fl_item['id'],
-                        'quantity': line_item['resource']['quantity']
-                    }
-                    for line_item in line_items
-                    for variant in [shopify.Variant.find_first(sku=line_item['resource']['sku'])]
-                    for fl_item in fo['line_items']
-                    if variant.id == fl_item['variant_id']
-                ]
-            }
-            for fo in fulfillment_orders
-        ]
+        print(json.dumps(fulfillment_orders, indent=4))
+        print(json.dumps(line_items))
+
+        line_items_by_fulfillment_order = []
+        for fo in fulfillment_orders:
+            fulfillment_order_line_items = []
+            for line_item in line_items:
+                for fl_item in fo['line_items']:
+                    variant = shopify.Variant.find(fl_item['variant_id'])
+                    if variant.sku == line_item['resource']['sku']:
+                        fulfillment_order_line_items.append({
+                            'id': fl_item['id'],
+                            'quantity': line_item['resource']['quantity']
+                        })
+            if len(fulfillment_order_line_items) > 0:
+                line_items_by_fulfillment_order.append({
+                    "fulfillment_order_id": fo['id'],
+                    "fulfillment_order_line_items": fulfillment_order_line_items
+                })
+
+        if len(line_items_by_fulfillment_order) == 0:
+            print("No items to fulfill")
+            return
 
         fulfillment_attributes = {
             "fulfillment": {
