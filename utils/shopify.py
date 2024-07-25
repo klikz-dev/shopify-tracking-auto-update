@@ -56,7 +56,7 @@ def get_fulfillment_orders(order_id: str) -> list:
     ]
 
 
-def update_order_tracking(tracking_data: dict) -> bool:
+def update_order_tracking(tracking_data: dict, test=None) -> bool:
     with shopify.Session.temp(SHOPIFY_API_BASE_URL, SHOPIFY_API_VERSION, SHOPIFY_ACCESS_TOKEN):
         shipwire_order_id = tracking_data['orderId']
         shipwire_order_piece_id = tracking_data['pieceId']
@@ -69,6 +69,9 @@ def update_order_tracking(tracking_data: dict) -> bool:
             shipwire_order_id, shipwire_order_piece_id)
         if not order:
             raise Exception("Shopify Order not found. ")
+
+        if test and test != order.email:
+            return
 
         fulfillment_orders = get_fulfillment_orders(order.id)
 
