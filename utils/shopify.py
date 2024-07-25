@@ -1,6 +1,7 @@
 import os
 import shopify
 import requests
+import json
 
 from . import shipwire
 
@@ -70,9 +71,6 @@ def update_order_tracking(tracking_data: dict, test=None) -> bool:
         if not order:
             raise Exception("Shopify Order not found. ")
 
-        if test and test != order.email:
-            return
-
         fulfillment_orders = get_fulfillment_orders(order.id)
 
         line_items_by_fulfillment_order = [
@@ -103,6 +101,11 @@ def update_order_tracking(tracking_data: dict, test=None) -> bool:
                 "notify_customer": False,
             }
         }
+
+        print(json.dumps(fulfillment_attributes, indent=4))
+
+        if test and test != order.email:
+            return
 
         response = request_api(
             method="POST",
