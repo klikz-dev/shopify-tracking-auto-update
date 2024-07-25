@@ -21,9 +21,14 @@ class handler(BaseHTTPRequestHandler):
 
             # Check Customer
             webhook_data = json.loads(data)
-            tracking_data = webhook_data['resource']
+            tracking_data = webhook_data['body']['resource']
 
-            shopify.update_order_tracking(tracking_data)
+            print(json.dumps(tracking_data, indent=4))
+
+            shopify.update_order_tracking(
+                tracking_data=tracking_data,
+                test="timothymccarthy@bedjet.com"
+            )
 
             self._send_response(200, "OK")
 
