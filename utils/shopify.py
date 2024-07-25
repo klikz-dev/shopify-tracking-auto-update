@@ -28,8 +28,7 @@ def request_api(method: str, url: str, payload: dict = None, params: dict = None
     if response.status_code in [200, 201]:
         return response.json()
     else:
-        print(f"Shopify API Error for {url}. Error: {response.text}")
-        return None
+        raise Exception(f"Shopify API Error for {url}. Error: {response.text}")
 
 
 def get_order_data(shipwire_order_id: str, shipwire_order_piece_id: str):
@@ -38,8 +37,8 @@ def get_order_data(shipwire_order_id: str, shipwire_order_piece_id: str):
         shipwire_order_id, shipwire_order_piece_id)
 
     if not shipwire_order or not shipwire_order_pieces:
-        print("Invalid order or order piece data.")
-        return False
+        raise ValueError(f"Invalid data. shipwire_order: {
+            shipwire_order}, shipwire_order_pieces: {shipwire_order_pieces}")
 
     order_number = shipwire_order['orderNo'].split(".")[0]
     shopify_order = shopify.Order.find_first(name=order_number, status="any")
@@ -63,13 +62,13 @@ def update_order_tracking(tracking_data: dict) -> bool:
         shipwire_order_piece_id = tracking_data['pieceId']
 
         if not shipwire_order_id or not shipwire_order_piece_id:
-            print("Invalid data format.")
-            return False
+            raise ValueError(
+                f"Invalid data. shipwire_order_id: {shipwire_order_id}, shipwire_order_piece_id: {shipwire_order_piece_id}")
 
         order, line_items = get_order_data(
             shipwire_order_id, shipwire_order_piece_id)
         if not order:
-            return False
+            raise Exception("Shopify Order not found. ")
 
         fulfillment_orders = get_fulfillment_orders(order.id)
 
@@ -109,9 +108,8 @@ def update_order_tracking(tracking_data: dict) -> bool:
         )
 
         if response and response.get('fulfillment', {}).get('status') == "success":
-            print("Tracking information updated successfully.")
-            return True
+            print(
+                f"Tracking information for Order {order.id} updated successfully.")
         else:
-            print(response)
-            print("Failed to update tracking information.")
-            return False
+            raise Exception(
+                f"Failed to update tracking information to Shopify. Response: {response}")
