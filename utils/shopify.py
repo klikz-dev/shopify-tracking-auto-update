@@ -62,7 +62,7 @@ def update_order_tracking(tracking_data: dict, test=None) -> bool:
         shipwire_order_piece_id = tracking_data['pieceId']
 
         if not shipwire_order_id or not shipwire_order_piece_id:
-            raise ValueError(
+            raise Exception(
                 f"Invalid data. shipwire_order_id: {shipwire_order_id}, shipwire_order_piece_id: {shipwire_order_piece_id}")
 
         order, line_items = get_order_data(

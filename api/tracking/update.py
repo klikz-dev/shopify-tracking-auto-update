@@ -35,7 +35,7 @@ class handler(BaseHTTPRequestHandler):
             return
 
         except Exception as e:
-            print(e)
+            print(str(e))
             self._send_response(400, f"{str(e)}")
 
     def do_GET(self):
