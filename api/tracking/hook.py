@@ -8,7 +8,8 @@ class handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
 
-        try:
+        # try:
+        if True:
             # Validate content length
             content_length = self.headers.get('content-length')
             if not content_length:
@@ -35,8 +36,8 @@ class handler(BaseHTTPRequestHandler):
                 print("Webhook content error".encode())
                 return
 
-        except Exception as e:
-            print(f"Webhook error: {str(e)}".encode())
-            self.send_response(400)
-            self.end_headers()
-            return
+        # except Exception as e:
+        #     print(f"Webhook error: {str(e)}".encode())
+        #     self.send_response(400)
+        #     self.end_headers()
+        #     return
