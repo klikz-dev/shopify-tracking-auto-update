@@ -15,10 +15,10 @@ def get_order(shipwire_order_id):
     )
 
     data = json.loads(response.text)
-    return data.get('resource')
+    return data['resource']
 
 
-def get_order_pieces(shipwire_order_id, shipwire_order_piece_id):
+def get_order_piece(shipwire_order_id, piece_id):
     response = requests.get(
         f"{SHIPWIRE_API_BASE_URL}/orders/{shipwire_order_id}/pieces",
         headers={
@@ -29,8 +29,20 @@ def get_order_pieces(shipwire_order_id, shipwire_order_piece_id):
     data = json.loads(response.text)
 
     for item in data['resource']['items']:
-        if item['resource']['id'] == shipwire_order_piece_id:
-            return item['resource']['contents']['resource']['items']
+        if item['resource']['id'] == piece_id:
+            return item['resource']['contents']['resource']['items'][0]['resource']
+
+
+def get_order_trackings(shipwire_order_id):
+    response = requests.get(
+        f"{SHIPWIRE_API_BASE_URL}/orders/{shipwire_order_id}/trackings",
+        headers={
+            'Authorization': f"ShipwireKey {SHIPWIRE_API_KEY}"
+        }
+    )
+
+    data = json.loads(response.text)
+    return data['resource']['items']
 
 
 def get_kits(sku):
@@ -48,7 +60,8 @@ def get_kits(sku):
             product_id = product['resource']['id']
 
             response = requests.get(
-                f"{SHIPWIRE_API_BASE_URL}/products/virtualKits/{product_id}/content?classification=virtualKit",
+                f"""{SHIPWIRE_API_BASE_URL}/products/virtualKits/{
+                    product_id}/content?classification=virtualKit""",
                 headers={
                     'Authorization': f"ShipwireKey {SHIPWIRE_API_KEY}"
                 }
@@ -62,4 +75,4 @@ def get_kits(sku):
 
             return kit_skus
 
-    return None
+    return []
