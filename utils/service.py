@@ -1,5 +1,4 @@
 from . import shipwire, shopify
-import json
 
 
 def get_shipwire_data(shipwire_order_id):
@@ -37,8 +36,6 @@ def get_shopify_data(order_number):
     shopify_order = shopify.get_order(order_number)
     fulfillment_orders = shopify.get_fulfillment_orders(shopify_order.id)
 
-    print(json.dumps(fulfillment_orders, indent=2))
-
     fulfillable_line_items = []
 
     if len(fulfillment_orders) > 0:
@@ -54,7 +51,7 @@ def get_shopify_data(order_number):
                 'sku': variant.sku
             })
 
-    return fulfillable_line_items
+    return shopify_order.email, fulfillable_line_items
 
 
 def generate_fulfillment_lines(trackings, fulfillable_line_items):
@@ -107,6 +104,31 @@ def generate_fulfillment_lines(trackings, fulfillable_line_items):
                             "notifyCustomer": False,
                         }
                     })
+
+    # Regroup fulfillments for line items to resolve fulfillmentOrderId is changed issue.
+    if len(fulfillments) > 0:
+        fulfillmentOrderLineItems = []
+        company = None
+        urls = []
+        for fulfillment in fulfillments:
+            fulfillmentOrderLineItems.append(
+                fulfillment['fulfillment']['lineItemsByFulfillmentOrder']['fulfillmentOrderLineItems'][0])
+            company = fulfillment['fulfillment']['trackingInfo']['company']
+            urls.append(fulfillment['fulfillment']['trackingInfo']['url'])
+
+        fulfillments = [{
+            "fulfillment": {
+                "lineItemsByFulfillmentOrder": {
+                    "fulfillmentOrderId": f"gid://shopify/FulfillmentOrder/{fl['fulfillment_order_id']}",
+                    "fulfillmentOrderLineItems": fulfillmentOrderLineItems
+                },
+                "trackingInfo": {
+                    "company": company,
+                    "urls": urls,
+                },
+                "notifyCustomer": False,
+            }
+        }]
 
     return fulfillments
 
