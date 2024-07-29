@@ -41,10 +41,35 @@ def get_order_data(shipwire_order_id: str, shipwire_order_piece_id: str):
         raise ValueError(
             f"Invalid data. shipwire_order: {shipwire_order}, shipwire_order_pieces: {shipwire_order_pieces}")
 
+    # Get Shopify Order
     order_number = shipwire_order['orderNo'].split(".")[0]
     shopify_order = shopify.Order.find_first(name=order_number, status="any")
 
-    return shopify_order, shipwire_order_pieces
+    if not shopify_order:
+        raise Exception("Shopify Order not found. ")
+
+    # Get Shopify Line Items
+    line_items = []
+
+    fulfillment_orders = get_fulfillment_orders(shopify_order.id)
+    for fulfillment_order in fulfillment_orders:
+        fulfillment_order_line_items = []
+        for shipwire_order_piece in shipwire_order_pieces:
+            for fulfillment_order_line_item in fulfillment_order['line_items']:
+                variant = shopify.Variant.find(
+                    fulfillment_order_line_item['variant_id'])
+                if variant.sku == shipwire_order_piece['resource']['sku']:
+                    fulfillment_order_line_items.append({
+                        'id': fulfillment_order_line_item['id'],
+                        'quantity': shipwire_order_piece['resource']['quantity']
+                    })
+        if len(fulfillment_order_line_items) > 0:
+            line_items.append({
+                "fulfillment_order_id": fulfillment_order['id'],
+                "fulfillment_order_line_items": fulfillment_order_line_items
+            })
+
+    return shopify_order, line_items
 
 
 def get_fulfillment_orders(order_id: str) -> list:
@@ -59,6 +84,7 @@ def get_fulfillment_orders(order_id: str) -> list:
 
 def update_order_tracking(tracking_data: dict, test=None) -> bool:
     with shopify.Session.temp(SHOPIFY_API_BASE_URL, SHOPIFY_API_VERSION, SHOPIFY_ACCESS_TOKEN):
+        # Get Shipwire Order ID and Order Pice ID from Webhook Data
         shipwire_order_id = tracking_data['orderId']
         shipwire_order_piece_id = tracking_data['pieceId']
 
@@ -66,40 +92,22 @@ def update_order_tracking(tracking_data: dict, test=None) -> bool:
             raise Exception(
                 f"Invalid data. shipwire_order_id: {shipwire_order_id}, shipwire_order_piece_id: {shipwire_order_piece_id}")
 
-        order, line_items = get_order_data(
+        # Get Shopify Order Data and Line Items
+        shopify_order, line_items = get_order_data(
             shipwire_order_id, shipwire_order_piece_id)
-        if not order:
-            raise Exception("Shopify Order not found. ")
+        if not shopify_order:
+            raise Exception("Shopify Order not found.")
+        if len(line_items) == 0:
+            raise Exception("No items to fulfill.")
 
-        fulfillment_orders = get_fulfillment_orders(order.id)
-
-        print(json.dumps(fulfillment_orders, indent=4))
-        print(json.dumps(line_items))
-
-        line_items_by_fulfillment_order = []
-        for fo in fulfillment_orders:
-            fulfillment_order_line_items = []
-            for line_item in line_items:
-                for fl_item in fo['line_items']:
-                    variant = shopify.Variant.find(fl_item['variant_id'])
-                    if variant.sku == line_item['resource']['sku']:
-                        fulfillment_order_line_items.append({
-                            'id': fl_item['id'],
-                            'quantity': line_item['resource']['quantity']
-                        })
-            if len(fulfillment_order_line_items) > 0:
-                line_items_by_fulfillment_order.append({
-                    "fulfillment_order_id": fo['id'],
-                    "fulfillment_order_line_items": fulfillment_order_line_items
-                })
-
-        if len(line_items_by_fulfillment_order) == 0:
-            print("No items to fulfill")
+        # Dev mode
+        if test and test != shopify_order.email:
             return
 
+        # Fulfill Line Items
         fulfillment_attributes = {
             "fulfillment": {
-                "line_items_by_fulfillment_order": line_items_by_fulfillment_order,
+                "line_items_by_fulfillment_order": line_items,
                 "tracking_info": {
                     "company": tracking_data['carrier'],
                     "number": tracking_data['tracking'],
@@ -108,11 +116,7 @@ def update_order_tracking(tracking_data: dict, test=None) -> bool:
                 "notify_customer": False,
             }
         }
-
         print(json.dumps(fulfillment_attributes, indent=4))
-
-        if test and test != order.email:
-            return
 
         response = request_api(
             method="POST",
@@ -122,7 +126,7 @@ def update_order_tracking(tracking_data: dict, test=None) -> bool:
 
         if response and response.get('fulfillment', {}).get('status') == "success":
             print(
-                f"Tracking information for Order {order.id} updated successfully.")
+                f"Tracking information for Order {shopify_order.id} updated successfully.")
         else:
             raise Exception(
                 f"Failed to update tracking information to Shopify. Response: {response}")
