@@ -17,7 +17,7 @@ def get_shipwire_data(shipwire_order_id):
         quantity = shipwire_order_piece['quantity']
 
         carrier = shipwire_order_tracking['resource']['carrier']
-        number = shipwire_order_tracking['resource']['number']
+        number = shipwire_order_tracking['resource']['tracking']
 
         trackings.append({
             'sku': sku,
@@ -81,7 +81,7 @@ def generate_fulfillment_lines(trackings, fulfillable_line_items):
                             "company": company,
                             "numbers": tracking_numbers,
                         },
-                        "notifyCustomer": False,
+                        "notifyCustomer": True,
                     }
                 })
 
@@ -101,7 +101,7 @@ def generate_fulfillment_lines(trackings, fulfillable_line_items):
                                 "company": tracking['carrier'],
                                 "number": tracking['number'],
                             },
-                            "notifyCustomer": False,
+                            "notifyCustomer": True,
                         }
                     })
 
@@ -127,7 +127,7 @@ def generate_fulfillment_lines(trackings, fulfillable_line_items):
                     "company": company,
                     "numbers": numbers,
                 },
-                "notifyCustomer": False,
+                "notifyCustomer": True,
             }
         }]
 
