@@ -34,9 +34,9 @@ class handler(BaseHTTPRequestHandler):
                 shipwire_data['order_number'])
             print(json.dumps(fulfillable_line_items, indent=2))
 
-            # if email != "timothymccarthy@bedjet.com":
-            #     self._send_response(403, "Test mode")
-            #     return
+            if email != "timothymccarthy@bedjet.com":
+                self._send_response(403, "Test mode")
+                return
 
             # Generate fulfillment lines based on Shipwire and Shoify Data
             fulfillment_lines = service.generate_fulfillment_lines(
