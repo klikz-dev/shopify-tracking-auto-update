@@ -106,7 +106,7 @@ def generate_fulfillment_lines(trackings, fulfillable_line_items):
                     })
 
     # Regroup fulfillments for line items to resolve fulfillmentOrderId is changed issue.
-    if len(fulfillments) > 0:
+    if len(fulfillments) > 1:
         fulfillmentOrderLineItems = []
         company = None
         urls = []
