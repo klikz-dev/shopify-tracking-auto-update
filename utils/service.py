@@ -17,13 +17,13 @@ def get_shipwire_data(shipwire_order_id):
         quantity = shipwire_order_piece['quantity']
 
         carrier = shipwire_order_tracking['resource']['carrier']
-        url = shipwire_order_tracking['resource']['url']
+        number = shipwire_order_tracking['resource']['number']
 
         trackings.append({
             'sku': sku,
             'quantity': quantity,
             'carrier': carrier,
-            'url': url,
+            'number': number,
         })
 
     return {
@@ -62,12 +62,12 @@ def generate_fulfillment_lines(trackings, fulfillable_line_items):
 
         if len(kit_skus) > 0:
             company = None
-            tracking_urls = []
+            tracking_numbers = []
             for tracking in trackings:
                 company = tracking['carrier']
-                tracking_urls.append(tracking['url'])
+                tracking_numbers.append(tracking['number'])
 
-            if company and len(tracking_urls) > 0:
+            if company and len(tracking_numbers) > 0:
                 fulfillments.append({
                     "fulfillment": {
                         "lineItemsByFulfillmentOrder": {
@@ -79,7 +79,7 @@ def generate_fulfillment_lines(trackings, fulfillable_line_items):
                         },
                         "trackingInfo": {
                             "company": company,
-                            "urls": tracking_urls,
+                            "numbers": tracking_numbers,
                         },
                         "notifyCustomer": False,
                     }
@@ -99,7 +99,7 @@ def generate_fulfillment_lines(trackings, fulfillable_line_items):
                             },
                             "trackingInfo": {
                                 "company": tracking['carrier'],
-                                "url": tracking['url'],
+                                "number": tracking['number'],
                             },
                             "notifyCustomer": False,
                         }
@@ -109,12 +109,13 @@ def generate_fulfillment_lines(trackings, fulfillable_line_items):
     if len(fulfillments) > 1:
         fulfillmentOrderLineItems = []
         company = None
-        urls = []
+        numbers = []
         for fulfillment in fulfillments:
             fulfillmentOrderLineItems.append(
                 fulfillment['fulfillment']['lineItemsByFulfillmentOrder']['fulfillmentOrderLineItems'][0])
             company = fulfillment['fulfillment']['trackingInfo']['company']
-            urls.append(fulfillment['fulfillment']['trackingInfo']['url'])
+            numbers.append(fulfillment['fulfillment']
+                           ['trackingInfo']['number'])
 
         fulfillments = [{
             "fulfillment": {
@@ -124,7 +125,7 @@ def generate_fulfillment_lines(trackings, fulfillable_line_items):
                 },
                 "trackingInfo": {
                     "company": company,
-                    "urls": urls,
+                    "numbers": numbers,
                 },
                 "notifyCustomer": False,
             }
